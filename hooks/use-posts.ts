@@ -20,10 +20,10 @@ export const usePost = (postVisibleId: string) => {
   })
 }
 
-export const useComments = (postVisibleId: string) => {
+export const useComments = (postId: string) => {
   return useQuery({
-    queryKey: ['comments', postVisibleId],
-    queryFn: () => apiClient.get<Comment[]>(`/social/posts/${postVisibleId}/comments`),
-    enabled: !!postVisibleId,
+    queryKey: ['comments', postId],
+    queryFn: () => apiClient.get<Comment[]>(`/social/posts/${postId}/comments`),
+    enabled: !!postId,
   })
 }

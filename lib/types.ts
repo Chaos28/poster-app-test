@@ -55,7 +55,8 @@ export interface SignInRequest {
 export interface SignUpRequest {
   email: string
   password: string
-  displayName: string
+  confirmPassword: string
+  fullName: string
 }
 
 export interface AuthResponse {

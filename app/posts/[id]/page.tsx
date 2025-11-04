@@ -213,10 +213,10 @@ function PostContent({ postId }: { postId: string }) {
   )
 }
 
-function CommentsSection({ postId }: { postId: string }) {
-  const { data: comments, isLoading } = useComments(postId)
+function CommentsSection({ postId }: { postId: string | undefined }) {
+  const { data: comments, isLoading } = useComments(postId || '')
 
-  if (isLoading) {
+  if (!postId || isLoading) {
     return <CommentsSkeleton />
   }
 
@@ -248,6 +248,8 @@ function CommentsSection({ postId }: { postId: string }) {
 }
 
 export default function PostPage({ params }: { params: { id: string } }) {
+  const { data: post } = usePost(params.id)
+
   return (
     <div className="min-h-screen">
       <Header />
@@ -255,7 +257,7 @@ export default function PostPage({ params }: { params: { id: string } }) {
       <main className="container mx-auto px-4 py-8">
         <article className="mx-auto max-w-3xl">
           <PostContent postId={params.id} />
-          <CommentsSection postId={params.id} />
+          <CommentsSection postId={post?.id} />
         </article>
       </main>
     </div>

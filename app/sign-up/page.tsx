@@ -17,7 +17,7 @@ export default function SignUpPage() {
   const [validationError, setValidationError] = useState("")
 
   const [formData, setFormData] = useState({
-    displayName: "",
+    fullName: "",
     email: "",
     password: "",
     confirmPassword: "",
@@ -44,7 +44,8 @@ export default function SignUpPage() {
     signUp({
       email: formData.email,
       password: formData.password,
-      displayName: formData.displayName,
+      confirmPassword: formData.confirmPassword,
+      fullName: formData.fullName,
     })
   }
 
@@ -57,13 +58,13 @@ export default function SignUpPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="displayName">Display Name</Label>
+              <Label htmlFor="fullName">Full Name</Label>
               <Input
-                id="displayName"
+                id="fullName"
                 type="text"
                 required
-                value={formData.displayName}
-                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                value={formData.fullName}
+                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
                 disabled={isPending}
               />
             </div>
