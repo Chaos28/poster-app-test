@@ -10,6 +10,8 @@ const nextConfig = {
     unoptimized: true,
   },
   async rewrites() {
+    const proxyFallback = process.env.NEXT_PROXY_FALLBACK || 'https://posters.aiml.cgify.com'
+
     return {
       afterFiles: [
         {
@@ -18,7 +20,7 @@ const nextConfig = {
         },
         {
           source: '/api/:path*',
-          destination: `${process.env.NEXT_PROXY_FALLBACK}/api/:path*`,
+          destination: `${proxyFallback}/api/:path*`,
         },
       ]
     };
