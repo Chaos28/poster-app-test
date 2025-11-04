@@ -1,3 +1,5 @@
+"use client"
+
 import { Header } from "@/components/header"
 import { Avatar, AvatarFallback, AvatarImage } from "@/components/ui/avatar"
 import { Card, CardContent, CardHeader } from "@/components/ui/card"
@@ -5,87 +7,8 @@ import { Button } from "@/components/ui/button"
 import { Textarea } from "@/components/ui/textarea"
 import { Skeleton } from "@/components/ui/skeleton"
 import { ThumbsUp, ThumbsDown, MessageCircle, CornerDownRight } from "lucide-react"
-import { notFound } from "next/navigation"
-import { Suspense } from "react"
-
-interface Post {
-  id: string
-  postVisibleId: number
-  title: string
-  preview: string
-  body: Array<{
-    content: string
-    options: Record<string, unknown>
-  }>
-  authorInfo: {
-    id: string
-    displayName: string
-    avatarUrl?: string
-  }
-  likesCount: number
-  dislikesCount: number
-  commentsCount: number
-  createdOn: string
-}
-
-interface Comment {
-  id: string
-  commentVisibleId: number
-  body: string
-  authorInfo: {
-    id: string
-    displayName: string
-    avatarUrl?: string
-  }
-  likesCount: number
-  dislikesCount: number
-  repliesCount: number
-  createdOn: string
-  replies?: Comment[]
-}
-
-async function getPost(postVisibleId: string): Promise<Post | null> {
-  try {
-    const response = await fetch(`/api/social/posts/${postVisibleId}`, {
-      cache: "no-store",
-    })
-
-    if (!response.ok) {
-      if (response.status === 404) {
-        return null
-      }
-      throw new Error("Failed to fetch post")
-    }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error("[v0] Error fetching post:", error)
-    return null
-  }
-}
-
-async function getComments(postVisibleId: string): Promise<Comment[]> {
-  try {
-    console.log("[v0] Fetching comments for post ID:", postVisibleId)
-
-    const response = await fetch(`/api/social/posts/${postVisibleId}/comments`, {
-      cache: "no-store",
-    })
-
-    if (!response.ok) {
-      const errorText = await response.text()
-      console.error(`[v0] Failed to fetch comments: ${response.status}`, errorText)
-      return []
-    }
-
-    const data = await response.json()
-    return data
-  } catch (error) {
-    console.error("[v0] Error fetching comments:", error)
-    return []
-  }
-}
+import { usePost, useComments } from "@/hooks/use-posts"
+import type { Comment } from "@/lib/types"
 
 function formatDate(dateString: string): string {
   const date = new Date(dateString)
@@ -230,11 +153,21 @@ function CommentItem({ comment, isReply = false }: { comment: Comment; isReply?:
   )
 }
 
-async function PostContent({ postId }: { postId: string }) {
-  const post = await getPost(postId)
+function PostContent({ postId }: { postId: string }) {
+  const { data: post, isLoading, error } = usePost(postId)
 
-  if (!post) {
-    notFound()
+  if (isLoading) {
+    return <PostSkeleton />
+  }
+
+  if (error || !post) {
+    return (
+      <Card className="mb-8">
+        <CardContent className="p-8 text-center">
+          <p className="text-destructive">Post not found</p>
+        </CardContent>
+      </Card>
+    )
   }
 
   return (
@@ -280,12 +213,16 @@ async function PostContent({ postId }: { postId: string }) {
   )
 }
 
-async function CommentsSection({ postId }: { postId: string }) {
-  const comments = await getComments(postId)
+function CommentsSection({ postId }: { postId: string }) {
+  const { data: comments, isLoading } = useComments(postId)
+
+  if (isLoading) {
+    return <CommentsSkeleton />
+  }
 
   return (
     <section className="space-y-6">
-      <h2 className="text-2xl font-bold">Comments ({comments.length})</h2>
+      <h2 className="text-2xl font-bold">Comments ({comments?.length || 0})</h2>
 
       <Card>
         <CardContent className="pt-6">
@@ -299,7 +236,7 @@ async function CommentsSection({ postId }: { postId: string }) {
         </CardContent>
       </Card>
 
-      {comments.length > 0 && (
+      {comments && comments.length > 0 && (
         <div className="space-y-4">
           {comments.map((comment) => (
             <CommentItem key={comment.id} comment={comment} />
@@ -310,8 +247,6 @@ async function CommentsSection({ postId }: { postId: string }) {
   )
 }
 
-export const revalidate = 0
-
 export default function PostPage({ params }: { params: { id: string } }) {
   return (
     <div className="min-h-screen">
@@ -319,13 +254,8 @@ export default function PostPage({ params }: { params: { id: string } }) {
 
       <main className="container mx-auto px-4 py-8">
         <article className="mx-auto max-w-3xl">
-          <Suspense fallback={<PostSkeleton />}>
-            <PostContent postId={params.id} />
-          </Suspense>
-
-          <Suspense fallback={<CommentsSkeleton />}>
-            <CommentsSection postId={params.id} />
-          </Suspense>
+          <PostContent postId={params.id} />
+          <CommentsSection postId={params.id} />
         </article>
       </main>
     </div>

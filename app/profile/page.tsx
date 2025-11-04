@@ -1,64 +1,38 @@
 "use client"
 
-import { useEffect, useState } from "react"
 import { useRouter } from "next/navigation"
 import { Avatar, AvatarFallback } from "@/components/ui/avatar"
 import { Button } from "@/components/ui/button"
 import { Card, CardContent } from "@/components/ui/card"
 import { Calendar, FileText, MessageSquare, Edit } from "lucide-react"
-
-interface UserProfile {
-  id: string
-  displayName: string
-  email: string
-  createdOn: string
-  postsCount: number
-  commentsCount: number
-}
+import { useProfile } from "@/hooks/use-profile"
+import { Skeleton } from "@/components/ui/skeleton"
 
 export default function ProfilePage() {
-  const [profile, setProfile] = useState<UserProfile | null>(null)
-  const [loading, setLoading] = useState(true)
-  const [error, setError] = useState("")
   const router = useRouter()
+  const { data: profile, isLoading, error } = useProfile()
 
-  useEffect(() => {
-    const fetchProfile = async () => {
-      const token = localStorage.getItem("authToken")
-
-      if (!token) {
-        router.push("/")
-        return
-      }
-
-      try {
-        const response = await fetch("/api/social/userprofiles/me", {
-          headers: {
-            Authorization: `Bearer ${token}`,
-          },
-        })
-
-        if (!response.ok) {
-          throw new Error("Failed to fetch profile")
-        }
-
-        const data = await response.json()
-        setProfile(data)
-      } catch (err) {
-        setError("Failed to load profile")
-        console.error(err)
-      } finally {
-        setLoading(false)
-      }
-    }
-
-    fetchProfile()
-  }, [router])
-
-  if (loading) {
+  if (isLoading) {
     return (
-      <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-muted-foreground">Loading profile...</div>
+      <div className="min-h-screen bg-muted/30">
+        <div className="container mx-auto px-4 py-8 max-w-4xl">
+          <Card className="mb-6">
+            <CardContent className="p-8">
+              <div className="flex items-start gap-6 mb-6">
+                <Skeleton className="h-24 w-24 rounded-full" />
+                <div className="space-y-2 flex-1">
+                  <Skeleton className="h-8 w-48" />
+                  <Skeleton className="h-4 w-64" />
+                  <Skeleton className="h-4 w-40" />
+                </div>
+              </div>
+              <div className="grid grid-cols-2 gap-4">
+                <Skeleton className="h-32 rounded-lg" />
+                <Skeleton className="h-32 rounded-lg" />
+              </div>
+            </CardContent>
+          </Card>
+        </div>
       </div>
     )
   }
@@ -66,7 +40,9 @@ export default function ProfilePage() {
   if (error || !profile) {
     return (
       <div className="min-h-screen bg-background flex items-center justify-center">
-        <div className="text-destructive">{error || "Profile not found"}</div>
+        <div className="text-destructive">
+          {error ? "Failed to load profile" : "Profile not found"}
+        </div>
       </div>
     )
   }

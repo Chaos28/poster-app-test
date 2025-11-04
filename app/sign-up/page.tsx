@@ -4,71 +4,48 @@ import type React from "react"
 
 import { useState } from "react"
 import Link from "next/link"
-import { useRouter } from "next/navigation"
 import { Button } from "@/components/ui/button"
 import { Input } from "@/components/ui/input"
 import { Label } from "@/components/ui/label"
 import { Card, CardContent, CardHeader, CardTitle } from "@/components/ui/card"
 import { Eye, EyeOff } from "lucide-react"
+import { useSignUp } from "@/hooks/use-auth"
 
 export default function SignUpPage() {
-  const router = useRouter()
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-  const [isLoading, setIsLoading] = useState(false)
-  const [error, setError] = useState("")
+  const [validationError, setValidationError] = useState("")
 
   const [formData, setFormData] = useState({
-    fullName: "",
+    displayName: "",
     email: "",
     password: "",
     confirmPassword: "",
   })
 
+  const { mutate: signUp, isPending, error } = useSignUp()
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setError("")
+    setValidationError("")
 
     // Validate passwords match
     if (formData.password !== formData.confirmPassword) {
-      setError("Passwords do not match")
+      setValidationError("Passwords do not match")
       return
     }
 
     // Validate password length
     if (formData.password.length < 8) {
-      setError("Password must be at least 8 characters long")
+      setValidationError("Password must be at least 8 characters long")
       return
     }
 
-    setIsLoading(true)
-
-    try {
-      const response = await fetch("/api/auth/users", {
-        method: "POST",
-        headers: {
-          "Content-Type": "application/json",
-        },
-        body: JSON.stringify({
-          email: formData.email,
-          password: formData.password,
-          confirmPassword: formData.confirmPassword,
-          fullName: formData.fullName,
-        }),
-      })
-
-      if (!response.ok) {
-        const errorData = await response.json()
-        throw new Error(errorData.message || "Registration failed")
-      }
-
-      // Registration successful, redirect to sign in
-      router.push("/sign-in?registered=true")
-    } catch (err) {
-      setError(err instanceof Error ? err.message : "An error occurred during registration")
-    } finally {
-      setIsLoading(false)
-    }
+    signUp({
+      email: formData.email,
+      password: formData.password,
+      displayName: formData.displayName,
+    })
   }
 
   return (
@@ -80,14 +57,14 @@ export default function SignUpPage() {
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
             <div className="space-y-2">
-              <Label htmlFor="fullName">Full Name</Label>
+              <Label htmlFor="displayName">Display Name</Label>
               <Input
-                id="fullName"
+                id="displayName"
                 type="text"
                 required
-                value={formData.fullName}
-                onChange={(e) => setFormData({ ...formData, fullName: e.target.value })}
-                disabled={isLoading}
+                value={formData.displayName}
+                onChange={(e) => setFormData({ ...formData, displayName: e.target.value })}
+                disabled={isPending}
               />
             </div>
 
@@ -99,7 +76,7 @@ export default function SignUpPage() {
                 required
                 value={formData.email}
                 onChange={(e) => setFormData({ ...formData, email: e.target.value })}
-                disabled={isLoading}
+                disabled={isPending}
               />
             </div>
 
@@ -112,13 +89,14 @@ export default function SignUpPage() {
                   required
                   value={formData.password}
                   onChange={(e) => setFormData({ ...formData, password: e.target.value })}
-                  disabled={isLoading}
+                  disabled={isPending}
                   className="pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowPassword(!showPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isPending}
                 >
                   {showPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
@@ -135,23 +113,28 @@ export default function SignUpPage() {
                   required
                   value={formData.confirmPassword}
                   onChange={(e) => setFormData({ ...formData, confirmPassword: e.target.value })}
-                  disabled={isLoading}
+                  disabled={isPending}
                   className="pr-10"
                 />
                 <button
                   type="button"
                   onClick={() => setShowConfirmPassword(!showConfirmPassword)}
                   className="absolute right-3 top-1/2 -translate-y-1/2 text-muted-foreground hover:text-foreground"
+                  disabled={isPending}
                 >
                   {showConfirmPassword ? <EyeOff className="h-4 w-4" /> : <Eye className="h-4 w-4" />}
                 </button>
               </div>
             </div>
 
-            {error && <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">{error}</div>}
+            {(validationError || error) && (
+              <div className="rounded-md bg-destructive/10 p-3 text-sm text-destructive">
+                {validationError || error?.message}
+              </div>
+            )}
 
-            <Button type="submit" className="w-full" disabled={isLoading}>
-              {isLoading ? "Creating Account..." : "Create Account"}
+            <Button type="submit" className="w-full" disabled={isPending}>
+              {isPending ? "Creating Account..." : "Create Account"}
             </Button>
 
             <p className="text-center text-sm text-muted-foreground">

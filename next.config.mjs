@@ -18,7 +18,7 @@ const nextConfig = {
         },
         {
           source: '/api/:path*',
-          destination: `https://posters.aiml.cgify.com/api/:path*`,
+          destination: `${process.env.NEXT_PROXY_FALLBACK}/api/:path*`,
         },
       ]
     };
