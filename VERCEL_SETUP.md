@@ -47,14 +47,23 @@ If you're still experiencing CORS issues after deployment:
 ## API Request Flow
 
 ```
-Frontend (Vercel) → /api/* → Next.js Rewrites → https://posters.aiml.cgify.com/api/*
+Frontend (Vercel) → /api/* → Next.js Middleware → https://posters.aiml.cgify.com/api/*
 ```
 
-All API requests are proxied through Next.js rewrites to avoid CORS issues.
+All API requests are proxied through Next.js middleware to avoid CORS issues.
 
 ## Files Configuration
 
-- `next.config.mjs` - Contains rewrites and CORS headers configuration
-- `vercel.json` - Additional Vercel-specific configuration
+- `middleware.ts` - Handles API proxying through Next.js middleware
+- `next.config.mjs` - Basic Next.js configuration
 - `.env.example` - Template for environment variables
 - `.env.local` - Local development environment variables (not in git)
+
+## How It Works
+
+The middleware intercepts all requests to `/api/*` paths and rewrites them to the backend API URL (`https://posters.aiml.cgify.com/api/*`). This way:
+
+1. Client-side fetch requests go to `/api/auth/session` (same origin)
+2. Middleware rewrites to `https://posters.aiml.cgify.com/api/auth/session`
+3. No CORS issues because the request is proxied server-side
+4. Cookies work correctly with `credentials: 'include'`
