@@ -9,7 +9,13 @@ export const useSignIn = () => {
   return useMutation({
     mutationFn: (data: SignInRequest) =>
       apiClient.post<AuthResponse>('/auth/session', data),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // Save auth data to localStorage
+      localStorage.setItem('authToken', response.token)
+      localStorage.setItem('userFullName', response.user.displayName)
+      localStorage.setItem('userEmail', response.user.email)
+      localStorage.setItem('userId', response.user.id)
+
       router.push('/')
     },
   })
@@ -21,7 +27,13 @@ export const useSignUp = () => {
   return useMutation({
     mutationFn: (data: SignUpRequest) =>
       apiClient.post<AuthResponse>('/auth/users', data),
-    onSuccess: () => {
+    onSuccess: (response) => {
+      // Save auth data to localStorage
+      localStorage.setItem('authToken', response.token)
+      localStorage.setItem('userFullName', response.user.displayName)
+      localStorage.setItem('userEmail', response.user.email)
+      localStorage.setItem('userId', response.user.id)
+
       router.push('/')
     },
   })
