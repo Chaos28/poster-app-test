@@ -61,7 +61,7 @@ export default function HomePage() {
 		<div className="min-h-screen">
 			<Header />
 			<HeroSection />
-
+			test message
 			<main className="container mx-auto px-4 py-8">
 				<div className="mx-auto max-w-4xl">
 					<h2 className="mb-6 text-2xl font-bold">Post Feed</h2>
