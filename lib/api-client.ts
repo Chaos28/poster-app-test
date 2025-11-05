@@ -16,6 +16,15 @@ class ApiClient {
     options: RequestOptions = {}
   ): Promise<T> {
     const { token, ...fetchOptions } = options
+    const method = fetchOptions.method || 'GET'
+    const url = `${this.baseUrl}${endpoint}`
+    const startTime = performance.now()
+
+    // Логирование запроса
+    console.log(`[API Request] ${method} ${url}`)
+    if (fetchOptions.body) {
+      console.log('[API Request Body]', fetchOptions.body)
+    }
 
     const headers: Record<string, string> = {
       'Content-Type': 'application/json',
@@ -24,22 +33,52 @@ class ApiClient {
 
     if (token) {
       headers['Authorization'] = `Bearer ${token}`
+      console.log('[API Request] Using authentication token')
     }
 
-    const response = await fetch(`${this.baseUrl}${endpoint}`, {
-      ...fetchOptions,
-      headers,
-      credentials: 'include', // Important for cookies
-    })
+    try {
+      const response = await fetch(url, {
+        ...fetchOptions,
+        headers,
+        credentials: 'include', // Important for cookies
+      })
 
-    if (!response.ok) {
-      const error = await response.json().catch(() => ({
-        message: 'An error occurred',
-      }))
-      throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      const duration = performance.now() - startTime
+
+      if (!response.ok) {
+        const error = await response.json().catch(() => ({
+          message: 'An error occurred',
+        }))
+
+        // Логирование ошибки
+        console.error(
+          `[API Error] ${method} ${url} - Status: ${response.status} - Duration: ${duration.toFixed(2)}ms`,
+          error
+        )
+
+        throw new Error(error.message || `HTTP error! status: ${response.status}`)
+      }
+
+      // Логирование успешного ответа
+      console.log(
+        `[API Response] ${method} ${url} - Status: ${response.status} - Duration: ${duration.toFixed(2)}ms`
+      )
+
+      const data = await response.json()
+      console.log('[API Response Data]', data)
+
+      return data
+    } catch (error) {
+      const duration = performance.now() - startTime
+
+      // Логирование исключений (сетевые ошибки и т.д.)
+      console.error(
+        `[API Exception] ${method} ${url} - Duration: ${duration.toFixed(2)}ms`,
+        error
+      )
+
+      throw error
     }
-
-    return response.json()
   }
 
   async get<T>(endpoint: string, options?: RequestOptions): Promise<T> {
